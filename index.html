@@ -73,7 +73,7 @@
 
     function flattenYaml(obj, parentKey = '', result = []) {
       for (const key in obj) {
-        const fullKey = parentKey ? \`\${parentKey}.\${key}\` : key;
+        const fullKey = parentKey ? `${parentKey}.${key}` : key;
         if (typeof obj[key] === 'object' && obj[key] !== null) {
           flattenYaml(obj[key], fullKey, result);
         } else {
