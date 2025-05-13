@@ -3,7 +3,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>📦 YAML → JSON 一括変換ツール</title>
+  <title>📦 YAML → JSON 一括変換（ZIP出力）</title>
   <style>
     body {
       font-family: sans-serif;
@@ -22,6 +22,7 @@
       background: #fff;
       border: 1px solid #ccc;
       border-radius: 6px;
+      white-space: pre-wrap;
     }
   </style>
 </head>
@@ -41,7 +42,9 @@
 
       const zip = new JSZip();
       const status = document.getElementById('status');
-      status.textContent = '変換中...';
+      status.textContent = '⏳ 変換中...';
+
+      let successCount = 0;
 
       for (const file of files) {
         try {
@@ -51,6 +54,7 @@
           const jsonText = JSON.stringify(jsonData, null, 2);
           const outputName = file.name.replace(/\.ya?ml$/, '.json');
           zip.file(outputName, jsonText);
+          successCount++;
         } catch (err) {
           status.textContent = `❌ ${file.name} の変換に失敗しました: ${err.message}`;
           return;
@@ -64,7 +68,7 @@
       a.click();
       URL.revokeObjectURL(a.href);
 
-      status.textContent = '✅ 変換完了！ZIPをダウンロードしました';
+      status.textContent = `✅ ${successCount} 件のファイルを変換してZIPにまとめました`;
     });
 
     function flattenYaml(obj, parentKey = '', result = []) {
