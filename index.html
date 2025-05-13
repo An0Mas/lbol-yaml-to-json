@@ -1,1 +1,83 @@
 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>📦 YAML → JSON 一括変換ツール</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      padding: 2rem;
+    }
+    h1 {
+      color: #333;
+    }
+    input[type="file"] {
+      margin-top: 1rem;
+    }
+    .output {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📦 YAML → JSON 一括変換（ZIP出力）</h1>
+  <p>YAMLファイルを複数選択してください。すべてJSONに変換され、ZIPでダウンロードできます。</p>
+
+  <input type="file" id="fileInput" accept=".yaml,.yml" multiple />
+  <div class="output" id="status">ファイル未選択</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script>
+    document.getElementById('fileInput').addEventListener('change', async function(e) {
+      const files = e.target.files;
+      if (!files.length) return;
+
+      const zip = new JSZip();
+      const status = document.getElementById('status');
+      status.textContent = '変換中...';
+
+      for (const file of files) {
+        try {
+          const text = await file.text();
+          const parsed = jsyaml.load(text);
+          const jsonData = flattenYaml(parsed);
+          const jsonText = JSON.stringify(jsonData, null, 2);
+          const outputName = file.name.replace(/\.ya?ml$/, '.json');
+          zip.file(outputName, jsonText);
+        } catch (err) {
+          status.textContent = `❌ ${file.name} の変換に失敗しました: ${err.message}`;
+          return;
+        }
+      }
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'converted_json_files.zip';
+      a.click();
+      URL.revokeObjectURL(a.href);
+
+      status.textContent = '✅ 変換完了！ZIPをダウンロードしました';
+    });
+
+    function flattenYaml(obj, parentKey = '', result = []) {
+      for (const key in obj) {
+        const fullKey = parentKey ? \`\${parentKey}.\${key}\` : key;
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          flattenYaml(obj[key], fullKey, result);
+        } else {
+          result.push({ key: fullKey, text: obj[key] });
+        }
+      }
+      return result;
+    }
+  </script>
+</body>
+</html>
